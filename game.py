@@ -42,6 +42,10 @@ def main():
 
                     fullscreen = not fullscreen
 
+            elif event.type == sf.Event.TEXT_ENTERED:
+                print(event.unicode)
+            
+
         fps = 1 / (fps_clock.elapsed_time.as_seconds())
         fps_clock.restart()
 
