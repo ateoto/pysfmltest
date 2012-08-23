@@ -29,7 +29,7 @@ class Client(asyncore.dispatcher):
         message = self.outbox.popleft()
         if len(message) > MAX_MESSAGE_LENGTH:
             raise ValueError('Message too long')
-        self.send('[%s] %s ' % (self.name, message)
+        self.send('[%s] %s ' % (self.name, message))
 
     def serve_forever(self):
         asyncore.loop()
