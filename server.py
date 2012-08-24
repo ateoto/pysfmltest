@@ -7,7 +7,7 @@ import time
 import signal
 import sys
 
-MAX_MESSAGE_LENGTH = 4096
+MAX_MESSAGE_LENGTH = 8192
 
 class RemoteClient(asyncore.dispatcher):
     
@@ -41,7 +41,7 @@ class Host(asyncore.dispatcher):
 
     log = logging.getLogger('Host')
 
-    def __init__(self, address=('localhost',9999)):
+    def __init__(self, address=('0.0.0.0',58025)):
         asyncore.dispatcher.__init__(self)
         self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
         self.set_reuse_addr()
@@ -89,10 +89,7 @@ if __name__ == '__main__':
         while True:
             # Process other things
             # Calculations and stuff
-            asyncore.loop(
-                    timeout=min(1,0, max(0.0, 1)),
-                    count=1
-            )
+            asyncore.loop(count=1)
     except KeyboardInterrupt:
         pass
 

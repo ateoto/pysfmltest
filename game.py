@@ -3,7 +3,9 @@ import os
 import logging
 import asyncore
 
-from chat_client import Client
+from ui import UI
+
+from chat_client import ChatClient
 
 def main():
     desktop_mode = sf.VideoMode.get_desktop_mode()
@@ -14,53 +16,42 @@ def main():
     fullscreen = False
     running = True
 
-    inconsolata = sf.Font.load_from_file(os.path.join(os.path.dirname(__file__), 'data', 'fonts','ttf-inconsolata.otf'))
-    fps_text = sf.Text('FPS: 0', inconsolata, 18)
-    fps_text.color = sf.Color.WHITE
-    fps_text.x = 4
-    fps_text.y = 0
-
-    chat_buffer = sf.Text(u'', inconsolata, 18)
-
-    chat_buffer.x = 0
-    chat_buffer.y = window.height - 20
-
     fps_clock = sf.Clock()
-
-    buffer = ''
-    capture_text = False
 
     logging.basicConfig(level=logging.INFO)
 
-    c = Client(('127.0.0.1', 9999), 'Ateoto')
+    ui = UI(window)
+    chat = ChatClient('Ateoto', ui)
 
     while running:
         for event in window.iter_events():
             if event.type == sf.Event.CLOSED:
                 running = False
             
-            elif event.type == sf.Event.TEXT_ENTERED and capture_text:
+            elif event.type == sf.Event.TEXT_ENTERED and chat.capturing_text:
                 if event.unicode <> '\b':
-                    buffer += event.unicode
+                    chat.buffer += event.unicode
 
             elif event.type == sf.Event.KEY_PRESSED:
                 if event.code == sf.Keyboard.ESCAPE:
                     """ Exit Game on Escape """
                     running = False
 
-                if event.code == sf.Keyboard.BACK_SPACE and capture_text:
-                    buffer = buffer[:-1]
+                if event.code == sf.Keyboard.BACK_SPACE and chat.capturing_text:
+                    chat.buffer = chat.buffer[:-1]
 
-                if event.code == sf.Keyboard.T and not capture_text or event.code == sf.Keyboard.RETURN and not capture_text:
-                    buffer = ''
-                    capture_text = True
+                if event.code == sf.Keyboard.T and not chat.capturing_text or event.code == sf.Keyboard.RETURN and not chat.capturing_text:
+                    chat.buffer = ''
+                    chat.capturing_text = True
+                    ui.chat_buffer.visible = True
                     break
 
-                if event.code == sf.Keyboard.RETURN and capture_text:
-                    if len(buffer[1:]) >= 1:
-                        c.say(buffer[1:])
-                    buffer = ''
-                    capture_text = False
+                if event.code == sf.Keyboard.RETURN and chat.capturing_text:
+                    if len(chat.buffer[1:]) >= 1:
+                        chat.say(chat.buffer[1:])
+                    chat.buffer = ''
+                    chat.capturing_text = False
+                    ui.chat_buffer.visible = False
 
                 if event.code == sf.Keyboard.F11:
                     """ Toggle Fullscreen on F11 """
@@ -79,16 +70,12 @@ def main():
         fps = 1 / (fps_clock.elapsed_time.as_seconds())
         fps_clock.restart()
 
-        fps_text.string = u'FPS: %i' % (fps)
-    
-        chat_buffer.string = u':%s' % buffer[1:]
-
-        asyncore.loop(count=1)
+        ui.fps.drawable.string = u'FPS: %i' % (fps)
+        ui.chat_buffer.drawable.string = u':%s' % chat.buffer[1:]
+        chat.tick(window.iter_events())
 
         window.clear(sf.Color(94,94,94))
-        window.draw(fps_text)
-        if capture_text:
-            window.draw(chat_buffer)
+        ui.draw()
         window.display()
 
     window.close()
