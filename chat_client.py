@@ -6,7 +6,7 @@ import sys
 from threading import Thread
 import time
 
-MAX_MESSAGE_LENGTH = 1024
+MAX_MESSAGE_LENGTH = 8192
 
 class Client(asyncore.dispatcher):
 
