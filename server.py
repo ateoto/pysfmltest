@@ -56,6 +56,7 @@ class Host(asyncore.dispatcher):
         socket, addr = self.accept()
         self.log.info('Accepted client at %s', addr)
         self.remote_clients.append(RemoteClient(self, socket, addr))
+        self.log.info(self.remote_clients)
 
     def handle_read(self):
         self.log.info('Received message: %s', self.read())
