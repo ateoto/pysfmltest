@@ -4,6 +4,7 @@ import logging
 import asyncore
 
 from ui import UI
+from animatedsprite import AnimatedSprite
 
 from chat_client import ChatClient
 
@@ -22,7 +23,9 @@ def main():
 
     ui = UI(window)
     chat = ChatClient('Ateoto', ui)
-
+    
+    me = AnimatedSprite(sf.Texture.load_from_file('data/art/male_walkcycle.png'))
+    me.set_texture_rect(sf.IntRect(0, 128, 64, 64))
     while running:
         for event in window.iter_events():
             if event.type == sf.Event.CLOSED:
@@ -75,6 +78,7 @@ def main():
         chat.tick(window.iter_events())
 
         window.clear(sf.Color(94,94,94))
+        window.draw(me)
         ui.draw()
         window.display()
 
