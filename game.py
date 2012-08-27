@@ -3,6 +3,8 @@ import os
 import logging
 import asyncore
 
+import age
+
 from collections import deque
 
 from ui import UI
@@ -19,6 +21,8 @@ def main():
     fullscreen = False
     running = True
 
+    game_clock = sf.Clock()
+
     fps_clock = sf.Clock()
 
     logging.basicConfig(level=logging.INFO)
@@ -27,40 +31,39 @@ def main():
     chat = ChatClient('Ateoto', ui)
     
 
-    walkcycle_texture = sf.Texture.load_from_file('data/art/male_walkcycle.png')
+    wc_base_t = sf.Texture.load_from_file('data/actors/human_male/walkcycle/BODY_animation.png')
+    wc_t = sf.RenderTexture(wc_base_t.width, wc_base_t.height)
+    wc_t.clear(sf.Color.TRANSPARENT)
 
-    walkcycle_with_clothes = sf.RenderTexture(walkcycle_texture.width, walkcycle_texture.height)
+    wc_base = sf.Sprite(wc_base_t)
+    wc_armor = sf.Sprite(sf.Texture.load_from_file('data/actors/human_male/walkcycle/TORSO_leather_armor_torso.png'))
+    wc_shoulders = sf.Sprite(sf.Texture.load_from_file('data/actors/human_male/walkcycle/TORSO_leather_armor_shoulders.png'))
+    wc_bracers = sf.Sprite(sf.Texture.load_from_file('data/actors/human_male/walkcycle/TORSO_leather_armor_bracers.png'))
+    wc_hair = sf.Sprite(sf.Texture.load_from_file('data/actors/human_male/walkcycle/HEAD_hair_blonde.png'))
+    wc_pants = sf.Sprite(sf.Texture.load_from_file('data/actors/human_male/walkcycle/LEGS_pants_greenish.png'))
+    wc_boots = sf.Sprite(sf.Texture.load_from_file('data/actors/human_male/walkcycle/FEET_shoes_brown.png'))
 
-    walkcycle_with_clothes.clear(sf.Color.TRANSPARENT)
+    wc_t.draw(wc_base)
+    wc_t.draw(wc_hair)
+    wc_t.draw(wc_armor)
+    wc_t.draw(wc_pants)
+    wc_t.draw(wc_shoulders)
+    wc_t.draw(wc_bracers)
+    wc_t.draw(wc_boots)
 
-
-    base_me = sf.Sprite(walkcycle_texture)
-    armor = sf.Sprite(sf.Texture.load_from_file('data/art/lpc_entry/png/walkcycle/TORSO_leather_armor_torso.png'))
-    shoulders = sf.Sprite(sf.Texture.load_from_file('data/art/lpc_entry/png/walkcycle/TORSO_leather_armor_shoulders.png'))
-    bracers = sf.Sprite(sf.Texture.load_from_file('data/art/lpc_entry/png/walkcycle/TORSO_leather_armor_bracers.png'))
-    pants = sf.Sprite(sf.Texture.load_from_file('data/art/lpc_entry/png/walkcycle/LEGS_pants_greenish.png'))
-    boots = sf.Sprite(sf.Texture.load_from_file('data/art/lpc_entry/png/walkcycle/FEET_shoes_brown.png'))
-
-    walkcycle_with_clothes.draw(base_me)
-    walkcycle_with_clothes.draw(armor)
-    walkcycle_with_clothes.draw(pants)
-    walkcycle_with_clothes.draw(shoulders)
-    walkcycle_with_clothes.draw(bracers)
-    walkcycle_with_clothes.draw(boots)
-
-    walkcycle_with_clothes.display()
-    walkcycle_clothes_texture = walkcycle_with_clothes.texture
+    wc_t.display()
+    
     walkcycle_north_frames = deque()
     walkcycle_south_frames = deque()
     walkcycle_east_frames = deque()
     walkcycle_west_frames = deque()
 
 
-    for f in range(0, walkcycle_texture.width, 64):
-        walkcycle_north_frames.append(AnimationFrame(walkcycle_clothes_texture, sf.IntRect(f, 0, 64, 64), 0.1))
-        walkcycle_south_frames.append(AnimationFrame(walkcycle_clothes_texture, sf.IntRect(f, 128, 64, 64), 0.1))
-        walkcycle_east_frames.append(AnimationFrame(walkcycle_clothes_texture, sf.IntRect(f, 64, 64, 64), 0.1))
-        walkcycle_west_frames.append(AnimationFrame(walkcycle_clothes_texture, sf.IntRect(f, 192, 64, 64), 0.1))
+    for f in range(0, wc_t.width, 64):
+        walkcycle_north_frames.append(AnimationFrame(wc_t.texture, sf.IntRect(f, 0, 64, 64), 0.1))
+        walkcycle_south_frames.append(AnimationFrame(wc_t.texture, sf.IntRect(f, 128, 64, 64), 0.1))
+        walkcycle_east_frames.append(AnimationFrame(wc_t.texture, sf.IntRect(f, 64, 64, 64), 0.1))
+        walkcycle_west_frames.append(AnimationFrame(wc_t.texture, sf.IntRect(f, 192, 64, 64), 0.1))
 
 
     walkcycle_north = Animation(walkcycle_north_frames)
@@ -68,10 +71,58 @@ def main():
     walkcycle_east = Animation(walkcycle_east_frames)
     walkcycle_west = Animation(walkcycle_west_frames)
 
-    me = AnimatedSprite(sf.Texture.load_from_file('data/art/male_walkcycle.png'))
+    s_base_t = sf.Texture.load_from_file('data/actors/human_male/slash/BODY_animation.png')
+    s_t = sf.RenderTexture(s_base_t.width, s_base_t.height)
+    s_t.clear(sf.Color.TRANSPARENT)
+
+    s_base = sf.Sprite(s_base_t)
+    s_armor = sf.Sprite(sf.Texture.load_from_file('data/actors/human_male/slash/TORSO_leather_armor_torso.png'))
+    s_shoulders = sf.Sprite(sf.Texture.load_from_file('data/actors/human_male/slash/TORSO_leather_armor_shoulders.png'))
+    s_bracers = sf.Sprite(sf.Texture.load_from_file('data/actors/human_male/slash/TORSO_leather_armor_bracers.png'))
+    s_hair = sf.Sprite(sf.Texture.load_from_file('data/actors/human_male/slash/HEAD_hair_blonde.png'))
+    s_pants = sf.Sprite(sf.Texture.load_from_file('data/actors/human_male/slash/LEGS_pants_greenish.png'))
+    s_boots = sf.Sprite(sf.Texture.load_from_file('data/actors/human_male/slash/FEET_shoes_brown.png'))
+    s_dagger = sf.Sprite(sf.Texture.load_from_file('data/actors/human_male/slash/WEAPON_dagger.png'))
+
+    s_t.draw(s_base)
+    s_t.draw(s_hair)
+    s_t.draw(s_armor)
+    s_t.draw(s_pants)
+    s_t.draw(s_shoulders)
+    s_t.draw(s_bracers)
+    s_t.draw(s_boots)
+    s_t.draw(s_dagger)
+
+    s_t.display()
+
+    s_north_frames = deque()
+    s_south_frames = deque()
+    s_east_frames = deque()
+    s_west_frames = deque()
+
+    for f in range(0, s_t.width, 64):
+        s_north_frames.append(AnimationFrame(s_t.texture, sf.IntRect(f, 0, 64, 64), 0.05))
+        s_south_frames.append(AnimationFrame(s_t.texture, sf.IntRect(f, 128, 64, 64), 0.05))
+        s_east_frames.append(AnimationFrame(s_t.texture, sf.IntRect(f, 64, 64, 64), 0.05))
+        s_west_frames.append(AnimationFrame(s_t.texture, sf.IntRect(f, 192, 64, 64), 0.05))
+        
+
+    s_north = Animation(s_north_frames)
+    s_south = Animation(s_south_frames)
+    s_east = Animation(s_east_frames)
+    s_west = Animation(s_west_frames)
+
+    s_anims = [ s_north, s_east, s_south, s_west ]
+
+    me = AnimatedSprite(wc_t.texture)
     me.set_texture_rect(sf.IntRect(0, 128, 64, 64))
 
     me.position = (window.width / 2, window.height / 2)
+    
+    facing = 2
+
+
+    map = age.map.TiledMap('data/maps/0_0.tmx')
 
     while running:
         for event in window.iter_events():
@@ -83,6 +134,7 @@ def main():
                     chat.buffer += event.unicode
 
             elif event.type == sf.Event.KEY_PRESSED:
+                """
                 if event.code == sf.Keyboard.W:
                     me.animate(walkcycle_north, loop = True)
 
@@ -94,6 +146,10 @@ def main():
 
                 if event.code == sf.Keyboard.D:
                     me.animate(walkcycle_west, loop = True)
+                """
+    
+                if event.code == sf.Keyboard.NUM1:
+                    me.animate(s_anims[facing])
 
                 if event.code == sf.Keyboard.Q:
                     me.stop_animation()
@@ -132,6 +188,30 @@ def main():
 
                     fullscreen = not fullscreen
 
+        if sf.Keyboard.is_key_pressed(sf.Keyboard.W):
+            if not me.is_animating or me.animation is not walkcycle_north: 
+                me.animate(walkcycle_north, loop=True)
+            facing = 0
+            me.move(0,-2)
+        elif sf.Keyboard.is_key_pressed(sf.Keyboard.A):
+            if not me.is_animating or me.animation is not walkcycle_east:
+                me.animate(walkcycle_east, loop=True)
+            facing = 1
+            me.move(-2, 0)
+        elif sf.Keyboard.is_key_pressed(sf.Keyboard.S):
+            if not me.is_animating or me.animation is not walkcycle_south:
+                me.animate(walkcycle_south, loop=True)
+            facing = 2
+            me.move(0,2)
+        elif sf.Keyboard.is_key_pressed(sf.Keyboard.D):
+            if not me.is_animating or me.animation is not walkcycle_west:
+                me.animate(walkcycle_west, loop=True)
+            facing = 3
+            me.move(2,0)
+        else:
+            if me.is_animating: 
+                if me.animation not in [s_north, s_south, s_east, s_west]:
+                    me.stop_animation()
 
         fps = 1 / (fps_clock.elapsed_time.as_seconds())
         delta_time = fps_clock.restart()
@@ -143,6 +223,7 @@ def main():
         me.update(delta_time.as_seconds())
 
         window.clear(sf.Color(94,94,94))
+        window.draw(map)
         window.draw(me)
         ui.draw()
         window.display()

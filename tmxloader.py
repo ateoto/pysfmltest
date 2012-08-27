@@ -5,11 +5,6 @@ import StringIO
 import gzip
 import struct
 
-
-
-class TiledTile:
-
-
 class TiledCell:
     def __init__(self, x, y, px, py, tile):
         self.x = px
@@ -57,6 +52,9 @@ class TiledMap:
     def load_from_file(self, filename):
         tree = ElementTree.parse(filename)
         root = tree.getroot()
+
+        # Need to load tilesets.
+
         for layer in root.findall('layer'):
             tl = TiledLayer()
             tl.name = layer.attrib.get('name')
