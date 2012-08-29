@@ -1,6 +1,7 @@
 import sfml as sf
 import sys
 import time
+from collections import deque
 
 class ScheduledItem(object):
     def __init__(self, func, args, kwargs):
@@ -26,6 +27,11 @@ class GameClock(sf.Clock):
         else:
             self.time = time.time
 
+        self.frame = 0
+        self.fpses = deque()
+        self.ticks = deque()
+        self.fps = 0
+        self.average_fps = 0
         self.started = self.time()
         self.last_ts = self.started
         
@@ -33,8 +39,9 @@ class GameClock(sf.Clock):
         self.scheduled_interval_items = list()
 
     def update(self):
+        self.frame += 1
         ts = self.time()
-        dt = ts - self.last_ts
+        dt = sf.Time(seconds=ts - self.last_ts)
         
         to_remove = list()
 
@@ -55,7 +62,22 @@ class GameClock(sf.Clock):
         
         self.restart()
         self.last_ts = ts
+        self.ticks.append(dt)
+        while len(self.ticks) > 1000:
+            self.ticks.popleft()
 
+        return dt
+
+    def calculate_fps(self, dt):
+        total_frame_time = sum(t.as_seconds() for t in self.ticks)
+        if total_frame_time <= 0: 
+            self.fps = 0
+        else:
+            self.fps = int(len(self.ticks) / total_frame_time)
+        self.fpses.append(self.fps)
+        while len(self.fpses) > 1000:
+            self.fpses.popleft()
+        self.average_fps = int(sum(self.fpses) / len(self.fpses))
 
     def sort_scheduled_interval_items(self):
         self.scheduled_interval_items.sort(key=lambda a: a.next_ts)
