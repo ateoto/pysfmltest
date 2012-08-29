@@ -7,25 +7,27 @@ import StringIO
 import gzip
 import struct
 import time
-
 import os
+import logging as log
 
-class TiledTile(sf.Sprite):
+class TiledTile(object):
     def __init__(self, gid, texture):
-        super(TiledTile, self).__init__(texture)
+        self.texture = texture
         self.gid = gid
 
 class TiledCell(sf.Sprite):
-    def __init__(self, pos, tile):
-        self.tile = tile
-        super(TiledCell, self).__init__(self.tile.texture)
+    def __init__(self, pos, texture):
+        super(TiledCell, self).__init__(texture)
         self.position = pos
 
-    def draw(self, target, states):
-        target.draw(self)
+class MapObject(object):
+    def __init__(self, name, type, location, properties):
+        self.name = name
+        self.type = type
+        self.location = location
+        self.position = sf.Vector2f(self.location.left, self.location.top)
+        self.properties = properties
 
-    def __repr__(self):
-        return u'(%s, %s)' % (self.position[0], self.position[1])
 
 class TiledLayerIterator:
     def __init__(self, layer):
@@ -42,13 +44,13 @@ class TiledLayerIterator:
 
         return value
 
-class TiledLayer(sf.Sprite):
+class TiledLayer(object):
     def __init__(self, rows, columns):
-        super(TiledLayer, self).__init__()
         self.cells = {}
         self.rows = rows
         self.columns = columns
         self.visible = True
+        self.drawable = sf.RectangleShape(sf.Vector2f(rows * 32, columns * 32))
 
     def __iter__(self):
         return TiledLayerIterator(self)
@@ -67,14 +69,14 @@ class TiledTileset:
                 global_id = int(self.first_gid) + local_id
                 area = sf.IntRect(x * 32, y * 32, 32, 32)
                 tile_texture = sf.Texture.load_from_image(self.image, area)
-                self.tiles.update({global_id : TiledTile(global_id, tile_texture)})
+                self.tiles.update({global_id : tile_texture})
                 local_id += 1
-
 
 class TiledMap:
     def __init__(self, filename, area = None):
         self.layers = []
         self.tiles = {}
+        self.objects = {}
         self.area = area
         self.load_started = time.time()
         self.load_from_file(filename)
@@ -104,18 +106,18 @@ class TiledMap:
             ts = TiledTileset(firstgid, image)
             self.tiles.update(ts.tiles)
 
+        log.info('Tilesets loaded')
+
         for layer in root.findall('layer'):
             tl = TiledLayer(self.width, self.height)
             tl.name = layer.attrib.get('name')
-            if tl.name == 'collision':
-                tl.visible = False
 
             data = layer.find('data').text.rstrip().lstrip()
             data = b64decode(data)
             data = gzip.GzipFile(fileobj=StringIO.StringIO(data))
             data = data.read()
             data = struct.unpack('<%di' % (len(data)/4,), data)
-            cell_num = 1
+            
             for i, gid in enumerate(data):
                 if gid < 1: continue
                 x = i  % self.width
@@ -123,24 +125,44 @@ class TiledMap:
  
                 if gid in self.tiles.keys():
                     tl.cells[x,y] = TiledCell((x * 32, y * 32), self.tiles[gid])
-                    cell_num +=1
 
             rt = sf.RenderTexture(self.pixel_width, self.pixel_height)
             rt.clear(sf.Color.TRANSPARENT)
-            draw_count = 0
             for cell in tl:
                 if cell is not None:
-                    draw_count += 1
                     rt.draw(cell)
-            if draw_count == len(tl.cells): pass
+
             rt.display()
-            tl.set_texture(sf.Texture.load_from_image(rt.texture.copy_to_image()))       
+            tl.drawable.set_texture(sf.Texture.load_from_image(rt.texture.copy_to_image()))
+            
             self.layers.append(tl)
+        
+        log.info('Layers loaded')
+
+        for group in root.findall('objectgroup'):
+            for object in group.findall('object'):
+                o = MapObject(object.attrib.get('name'),
+                              object.attrib.get('type'),
+                              sf.IntRect(int(object.attrib.get('x')),
+                                            int(object.attrib.get('y')),
+                                            int(object.attrib.get('width')),
+                                            int(object.attrib.get('height'))),
+                              [])
+
+                for properties in object.findall('properties'):
+                    for property in properties.findall('property'):
+                        o.properties.append({'name' : property.attrib.get('name'),
+                                             'value': property.attrib.get('value')})
+
+                self.objects.update({o.name: o})
+
+        log.info('Objects loaded')
+
         self.load_finished = time.time()
         load_time = self.load_finished - self.load_started
-        print load_time
+        log.info('Level finished loading in {0} seconds.'.format(load_time))
 
     def draw(self, target, states):
         for layer in self.layers:
             if layer.visible:
-                target.draw(layer)
+                target.draw(layer.drawable)
